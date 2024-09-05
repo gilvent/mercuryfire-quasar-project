@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { addNewUser, deleteUser, getUsers } from 'src/api';
+import { addNewUser, deleteUser, getUsers, updateUser } from 'src/api';
 import { User } from 'src/utils/types';
 
 export const useUsersStore = defineStore('users', {
@@ -15,6 +15,13 @@ export const useUsersStore = defineStore('users', {
     },
     async addUser(data: { name: string; age: number }) {
       const response = await addNewUser(data);
+
+      if (response.data) {
+        this.fetchUsersData();
+      }
+    },
+    async updateUser(user: User) {
+      const response = await updateUser(user);
 
       if (response.data) {
         this.fetchUsersData();

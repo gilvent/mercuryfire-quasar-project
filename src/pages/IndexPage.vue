@@ -4,17 +4,19 @@
       <div class="q-mb-xl">
         <q-input
           ref="nameInputRef"
-          v-model="addUserForm.name"
+          v-model="userForm.name"
           label="姓名"
           :rules="nameInputRules"
         />
         <q-input
           ref="ageInputRef"
           label="年齡"
-          v-model="addUserForm.age"
+          v-model="userForm.age"
           :rules="ageInputRules"
         />
-        <q-btn color="primary" class="q-mt-md" @click="onAddClick">新增</q-btn>
+        <q-btn color="primary" class="q-mt-md" @click="onSubmitButtonClick">{{
+          formButtonText
+        }}</q-btn>
       </div>
 
       <q-table
@@ -91,12 +93,17 @@
 import { QTableProps, ValidationRule } from 'quasar';
 import { useUsersStore } from 'src/stores/users';
 import { User } from 'src/utils/types';
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 
 interface ButtonType {
   label: string;
   icon: string;
   status: string;
+}
+
+enum FormMode {
+  Edit = 'edit',
+  Add = 'add',
 }
 
 const usersStore = useUsersStore();
@@ -129,10 +136,13 @@ const tableButtons = ref([
   },
 ]);
 
-const addUserForm = ref({
+const userForm = ref({
+  id: '',
   name: '',
   age: '',
 });
+
+const formMode = ref<FormMode>(FormMode.Add);
 
 const nameInputRef = ref();
 const ageInputRef = ref();
@@ -158,14 +168,17 @@ function handleClickOption(btn: ButtonType, user: User) {
 }
 
 function enterEditMode(user: User) {
-  // TODO handle edit feature
+  formMode.value = FormMode.Edit;
+  userForm.value.name = user.name;
+  userForm.value.age = user.age.toString();
+  userForm.value.id = user.id;
 }
 
 function deleteUser(user: User) {
   usersStore.removeUser(user.id);
 }
 
-function onAddClick() {
+function onSubmitButtonClick() {
   nameInputRef.value.validate();
   ageInputRef.value.validate();
 
@@ -173,14 +186,35 @@ function onAddClick() {
     return;
   }
 
+  submit();
+}
+
+function submit() {
+  if (formMode.value === FormMode.Edit) {
+    usersStore.updateUser({
+      id: userForm.value.id,
+      name: userForm.value.name,
+      age: parseInt(userForm.value.age, 10),
+    });
+    return;
+  }
+
   usersStore.addUser({
-    name: addUserForm.value.name,
-    age: parseInt(addUserForm.value.age, 10),
+    name: userForm.value.name,
+    age: parseInt(userForm.value.age, 10),
   });
 }
 
 onMounted(() => {
   usersStore.fetchUsersData();
+});
+
+const formButtonText = computed(() => {
+  if (formMode.value === FormMode.Edit) {
+    return '更新';
+  }
+
+  return '新增';
 });
 </script>
 
