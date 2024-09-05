@@ -90,7 +90,7 @@
 </template>
 
 <script setup lang="ts">
-import { QTableProps, ValidationRule } from 'quasar';
+import { QTableProps, useQuasar, ValidationRule } from 'quasar';
 import { useUsersStore } from 'src/stores/users';
 import { User } from 'src/utils/types';
 import { computed, onMounted, ref } from 'vue';
@@ -107,6 +107,7 @@ enum FormMode {
 }
 
 const usersStore = useUsersStore();
+const $q = useQuasar();
 
 const tableConfig = ref([
   {
@@ -175,7 +176,14 @@ function enterEditMode(user: User) {
 }
 
 function deleteUser(user: User) {
-  usersStore.removeUser(user.id);
+  $q.dialog({
+    title: '指示',
+    message: '是否確定刪除該筆資料？',
+    cancel: true,
+    persistent: true,
+  }).onOk(() => {
+    usersStore.removeUser(user.id);
+  });
 }
 
 function onSubmitButtonClick() {
