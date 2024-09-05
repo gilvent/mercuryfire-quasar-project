@@ -2,16 +2,26 @@
   <q-page class="row q-pt-xl">
     <div class="full-width q-px-xl">
       <div class="q-mb-xl">
-        <q-input v-model="tempData.name" label="姓名" />
-        <q-input v-model="tempData.age" label="年齡" />
-        <q-btn color="primary" class="q-mt-md">新增</q-btn>
+        <q-input
+          ref="nameInputRef"
+          v-model="addUserForm.name"
+          label="姓名"
+          :rules="nameInputRules"
+        />
+        <q-input
+          ref="ageInputRef"
+          label="年齡"
+          v-model="addUserForm.age"
+          :rules="ageInputRules"
+        />
+        <q-btn color="primary" class="q-mt-md" @click="onAddClick">新增</q-btn>
       </div>
 
       <q-table
         flat
         bordered
         ref="tableRef"
-        :rows="blockData"
+        :rows="usersStore.users"
         :columns="(tableConfig as QTableProps['columns'])"
         row-key="id"
         hide-pagination
@@ -78,20 +88,18 @@
 </template>
 
 <script setup lang="ts">
-import axios from 'axios';
-import { QTableProps } from 'quasar';
-import { ref } from 'vue';
+import { QTableProps, ValidationRule } from 'quasar';
+import { useUsersStore } from 'src/stores/users';
+import { onMounted, ref } from 'vue';
+
 interface btnType {
   label: string;
   icon: string;
   status: string;
 }
-const blockData = ref([
-  {
-    name: 'test',
-    age: 25,
-  },
-]);
+
+const usersStore = useUsersStore();
+
 const tableConfig = ref([
   {
     label: '姓名',
@@ -119,13 +127,46 @@ const tableButtons = ref([
   },
 ]);
 
-const tempData = ref({
+const addUserForm = ref({
   name: '',
   age: '',
 });
+
+const nameInputRef = ref();
+const ageInputRef = ref();
+
+const nameInputRules = [isNotEmptyRule] as ValidationRule[];
+const ageInputRules = [isNotEmptyRule, isNumericRule] as ValidationRule[];
+
+function isNotEmptyRule(value: string): boolean | string {
+  return value !== '' || '不得空白';
+}
+
+function isNumericRule(value: string): boolean | string {
+  return !!value.match(/^\d+$/) || '限輸入數字';
+}
+
 function handleClickOption(btn, data) {
   // ...
 }
+
+function onAddClick() {
+  nameInputRef.value.validate();
+  ageInputRef.value.validate();
+
+  if (nameInputRef.value.hasError || ageInputRef.value.hasError) {
+    return;
+  }
+
+  usersStore.addUser({
+    name: addUserForm.value.name,
+    age: parseInt(addUserForm.value.age, 10),
+  });
+}
+
+onMounted(() => {
+  usersStore.fetchUsersData();
+});
 </script>
 
 <style lang="scss" scoped>
