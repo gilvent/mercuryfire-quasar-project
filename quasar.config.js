@@ -63,7 +63,7 @@ module.exports = configure(function (/* ctx */) {
       // publicPath: '/',
       // analyze: true,
       env: {
-        API: 'https://dahua.metcfire.com.tw/',
+        API: 'https://dahua.metcfire.com.tw/api',
       },
       // rawDefine: {}
       // ignorePublicFolder: true,
