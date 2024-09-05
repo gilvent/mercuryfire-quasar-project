@@ -90,10 +90,11 @@
 </template>
 
 <script setup lang="ts">
-import { QTableProps, useQuasar, ValidationRule } from 'quasar';
+import { QTableProps, useQuasar } from 'quasar';
+import useUserForm from 'src/composables/useUserForm.composable';
 import { useUsersStore } from 'src/stores/users';
 import { User } from 'src/utils/types';
-import { computed, onMounted, ref } from 'vue';
+import { onMounted, ref } from 'vue';
 
 interface ButtonType {
   label: string;
@@ -101,13 +102,18 @@ interface ButtonType {
   status: string;
 }
 
-enum FormMode {
-  Edit = 'edit',
-  Add = 'add',
-}
-
 const usersStore = useUsersStore();
 const $q = useQuasar();
+const {
+  userForm,
+  formButtonText,
+  nameInputRef,
+  ageInputRef,
+  nameInputRules,
+  ageInputRules,
+  enterEditMode,
+  onSubmitButtonClick,
+} = useUserForm();
 
 const tableConfig = ref([
   {
@@ -137,28 +143,6 @@ const tableButtons = ref([
   },
 ]);
 
-const userForm = ref({
-  id: '',
-  name: '',
-  age: '',
-});
-
-const formMode = ref<FormMode>(FormMode.Add);
-
-const nameInputRef = ref();
-const ageInputRef = ref();
-
-const nameInputRules = [isNotEmptyRule] as ValidationRule[];
-const ageInputRules = [isNotEmptyRule, isNumericRule] as ValidationRule[];
-
-function isNotEmptyRule(value: string): boolean | string {
-  return value !== '' || '不得空白';
-}
-
-function isNumericRule(value: string): boolean | string {
-  return !!value.match(/^\d+$/) || '限輸入數字';
-}
-
 function handleClickOption(btn: ButtonType, user: User) {
   const actionsByStatus: Record<ButtonType['status'], (user: User) => void> = {
     delete: deleteUser,
@@ -166,13 +150,6 @@ function handleClickOption(btn: ButtonType, user: User) {
   };
 
   actionsByStatus[btn.status](user);
-}
-
-function enterEditMode(user: User) {
-  formMode.value = FormMode.Edit;
-  userForm.value.name = user.name;
-  userForm.value.age = user.age.toString();
-  userForm.value.id = user.id;
 }
 
 function deleteUser(user: User) {
@@ -186,43 +163,8 @@ function deleteUser(user: User) {
   });
 }
 
-function onSubmitButtonClick() {
-  nameInputRef.value.validate();
-  ageInputRef.value.validate();
-
-  if (nameInputRef.value.hasError || ageInputRef.value.hasError) {
-    return;
-  }
-
-  submit();
-}
-
-function submit() {
-  if (formMode.value === FormMode.Edit) {
-    usersStore.updateUser({
-      id: userForm.value.id,
-      name: userForm.value.name,
-      age: parseInt(userForm.value.age, 10),
-    });
-    return;
-  }
-
-  usersStore.addUser({
-    name: userForm.value.name,
-    age: parseInt(userForm.value.age, 10),
-  });
-}
-
 onMounted(() => {
   usersStore.fetchUsersData();
-});
-
-const formButtonText = computed(() => {
-  if (formMode.value === FormMode.Edit) {
-    return '更新';
-  }
-
-  return '新增';
 });
 </script>
 
