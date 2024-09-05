@@ -90,9 +90,10 @@
 <script setup lang="ts">
 import { QTableProps, ValidationRule } from 'quasar';
 import { useUsersStore } from 'src/stores/users';
+import { User } from 'src/utils/types';
 import { onMounted, ref } from 'vue';
 
-interface btnType {
+interface ButtonType {
   label: string;
   icon: string;
   status: string;
@@ -114,6 +115,7 @@ const tableConfig = ref([
     align: 'left',
   },
 ]);
+
 const tableButtons = ref([
   {
     label: '編輯',
@@ -146,8 +148,21 @@ function isNumericRule(value: string): boolean | string {
   return !!value.match(/^\d+$/) || '限輸入數字';
 }
 
-function handleClickOption(btn, data) {
-  // ...
+function handleClickOption(btn: ButtonType, user: User) {
+  const actionsByStatus: Record<ButtonType['status'], (user: User) => void> = {
+    delete: deleteUser,
+    edit: enterEditMode,
+  };
+
+  actionsByStatus[btn.status](user);
+}
+
+function enterEditMode(user: User) {
+  // TODO handle edit feature
+}
+
+function deleteUser(user: User) {
+  usersStore.removeUser(user.id);
 }
 
 function onAddClick() {
